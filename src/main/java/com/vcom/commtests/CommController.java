@@ -1,5 +1,6 @@
 package com.vcom.commtests;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -12,8 +13,7 @@ import javafx.scene.control.TextArea;
 
 import java.io.Console;
 import java.net.URL;
-import java.util.ResourceBundle;
-import java.util.Vector;
+import java.util.*;
 
 
 public class CommController implements Initializable {
@@ -27,29 +27,61 @@ public class CommController implements Initializable {
     @FXML private TextArea txtOffPhrases;
 
     private SerialPort[] ports;
+    SerialPortComms ComA;
+    SerialPortComms ComB;
+    private boolean running = false;
+    private boolean updateDisplay = true;
+    private Set<String> onPhrasesSet;
+    private Set<String> offPhrasesSet;
 
     @Override
     public void initialize(URL url, ResourceBundle rb){
 
-        /* Sets up the port drop downs*/
+        /* Sets up the port drop-downs*/
         updatePortCB();
     }
 
 
     /**
      * TODO: Might move the process to be persistent thus allowing manual pausing and starting without getting new port
-     *
+     * TODO: Possible running indicator
      */
     public void prssStart(){
-        int portA = cbComA.getSelectionModel().getSelectedIndex();
-        int portB = cbComB.getSelectionModel().getSelectedIndex();
-        SerialPortComms ComA = new SerialPortComms(ports[portA], (String data) -> ConsoleOut(data));
-        SerialPortComms ComB = new SerialPortComms(ports[portB], (String data) -> ConsoleOut(data));
+        if(!running) {
+            int portA = cbComA.getSelectionModel().getSelectedIndex();
+            int portB = cbComB.getSelectionModel().getSelectedIndex();
+            ComA = new SerialPortComms(ports[portA], (String data) -> ConsoleOut(data), "Com A");
+            ComB = new SerialPortComms(ports[portB], (String data) -> ConsoleOut(data), "Com B");
+            btnStartStop.setText("Stop");
+            UpdatePhrases();
+            this.running = true;
 
+        }else{
+            ComA.CloseConnection();
+            ComB.CloseConnection();
+            btnStartStop.setText("Start");
+            this.running = false;
+        }
     }
 
-    public synchronized void ConsoleOut(String data) {
-        txtConsole.appendText(data);
+    public void ConsoleOut(String data) {
+        Platform.runLater(()->{
+            String rawData = data.substring(4).strip();
+            if (offPhrasesSet.contains(rawData)){
+                txtConsole.appendText(data);
+                updateDisplay = false;
+                return;
+            }else if(onPhrasesSet.contains(rawData)){
+                txtConsole.appendText(data);
+                updateDisplay = true;
+            }
+
+            if (updateDisplay){
+                txtConsole.appendText(data);
+            }
+
+        });
+
     }
 
     /**
@@ -84,6 +116,16 @@ public class CommController implements Initializable {
 
         cbComA.setValue(options.get(0));
         cbComB.setValue(options.get(1));
+    }
+
+    private void UpdatePhrases(){
+        String onPhrasesTxt = txtOnPhrases.getText();
+        String onPhrasesList[] = onPhrasesTxt.split("\\r?\\n");
+        onPhrasesSet = new HashSet<String>(List.of(onPhrasesList));
+
+        String offPhrasesTxt = txtOffPhrases.getText();
+        String offPhrasesList[] = offPhrasesTxt.split("\\r?\\n");
+        offPhrasesSet = new HashSet<String>(List.of(offPhrasesList));
     }
 
 }
