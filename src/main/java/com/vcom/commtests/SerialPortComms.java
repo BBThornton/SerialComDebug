@@ -22,9 +22,10 @@ public class SerialPortComms {
      * TODO Check port is open/catch exception
      * @param serialPort
      */
-    public SerialPortComms(SerialPort serialPort, Consumer<String> echo, String name) {
+    public SerialPortComms(SerialPort serialPort, Consumer<String> echo, String name, int baud) {
         this.serialPort = serialPort;
         this.serialPort.openPort();
+        this.serialPort.setBaudRate(baud);
         this.serialPort.addDataListener(new DataAvailableListener());
         this.echoCallback = echo;
         this.name = name;

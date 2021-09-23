@@ -3,6 +3,7 @@ package com.vcom.commtests;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -10,6 +11,7 @@ import javafx.scene.control.ChoiceBox;
 
 import com.fazecast.jSerialComm.*;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 
 import java.io.Console;
 import java.net.URL;
@@ -25,6 +27,7 @@ public class CommController implements Initializable {
     @FXML private TextArea txtConsole;
     @FXML private TextArea txtOnPhrases;
     @FXML private TextArea txtOffPhrases;
+    @FXML private TextField txtBaudRate;
 
     private SerialPort[] ports;
     SerialPortComms ComA;
@@ -50,8 +53,9 @@ public class CommController implements Initializable {
         if(!running) {
             int portA = cbComA.getSelectionModel().getSelectedIndex();
             int portB = cbComB.getSelectionModel().getSelectedIndex();
-            ComA = new SerialPortComms(ports[portA], (String data) -> ConsoleOut(data), "Com A");
-            ComB = new SerialPortComms(ports[portB], (String data) -> ConsoleOut(data), "Com B");
+            int baud = Integer.parseInt(txtBaudRate.getText());
+            ComA = new SerialPortComms(ports[portA], (String data) -> ConsoleOut(data), "Com A",baud);
+            ComB = new SerialPortComms(ports[portB], (String data) -> ConsoleOut(data), "Com B",baud);
             btnStartStop.setText("Stop");
             UpdatePhrases();
             this.running = true;
@@ -127,5 +131,7 @@ public class CommController implements Initializable {
         String offPhrasesList[] = offPhrasesTxt.split("\\r?\\n");
         offPhrasesSet = new HashSet<String>(List.of(offPhrasesList));
     }
+
+
 
 }
